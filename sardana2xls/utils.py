@@ -97,7 +97,7 @@ def generate_instrument_list(pool, db):
     return instr_list
 
 
-:x
+def generate_instrument_mapping(instr_list):
     id_map = unique_bidict()
     for instr in instr_list:
         id_map[instr[2]] = instr[1]
