@@ -17,6 +17,7 @@ import logging
 
 class SardanaMap:
     """ Manage sardana elements """
+
     def __init__(self, pool):
         # Connect to the tangodb
         self.db = tango.Database()
@@ -425,7 +426,7 @@ def write_line(sheet, line, data):
 
 def get_motor_attributes(name):
     tango_db = tango.DeviceProxy("sys/database/2")
-    quer = "Select attribute, value from property_attribute_device "
+    query = "Select attribute, value from property_attribute_device "
     query += "where device='{}' and name='__value'"
     query = query.format(name)
     reply = tango_db.DbMySqlSelect(query)
@@ -465,8 +466,9 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     usage = "%prog [options] <pool_instance> "
     parser = argparse.ArgumentParser(usage)
-    parser.add_argument('poolname', metavar='pool', type=str,
-                    help='Pool instance name')
+    parser.add_argument(
+        "poolname", metavar="pool", type=str, help="Pool instance name"
+    )
     args = parser.parse_args()
     proceed(args.poolname)
 
