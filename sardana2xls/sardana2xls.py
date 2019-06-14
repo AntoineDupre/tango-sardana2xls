@@ -8,17 +8,25 @@ from xlutils.copy import copy
 import pprint
 from functools import partial
 import sys
-
+import os
+import argparse
 import logging
 
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig(level=logging.DEBUG)
 
+usage = "%prog [options] <pool_instance> "
+parser = argparse(usage)
+options, args = parser.parse_args()
+
+if len(args) == 0:
+    logging.fatal("You need to provide at least a pool instance")
+    sys.exit()
 
 db = tango.Database()
 
 # Setup
-pool = sys.argv[1]
+pool = args[0]
 pool_server = "Pool/{}".format(pool)
 pool_name = db.get_device_name(pool_server, "Pool")[0]
 logging.info("Pool: {}".format(pool))
@@ -64,7 +72,9 @@ channels = [
 
 
 # Open xls file
-r_workbook = xlrd.open_workbook("template.xls")
+module_path = os.path.dirname(os.path.realpath(__file__))
+template_path = "{}/template/template.xls".format(module_path)
+r_workbook = xlrd.open_workbook(template_path)
 w_workbook = copy(r_workbook)
 door_sheet = w_workbook.get_sheet(2)
 controller_sheet = w_workbook.get_sheet(3)
@@ -90,6 +100,14 @@ default_properties = [
     "__SubDevices",
 ]
 
+mot_attributes = [
+    "EncoderSource",
+    "EncoderSourceFormula",
+    "Sign",
+    "Offset",
+    "Step_per_unit",
+    "UserEncoderSource",
+]
 
 def get_property(ds, name):
     proplist = db.get_device_property(ds, name)[name]
@@ -181,16 +199,6 @@ def proceed_pseudos(names, sheet):
     pseudos = sorted(pseudos, key=lambda x: (x[2], int(x[5])))
     for line, data in enumerate(pseudos):
         write_line(sheet, line + 1, data)
-
-
-mot_attributes = [
-    "EncoderSource",
-    "EncoderSourceFormula",
-    "Sign",
-    "Offset",
-    "Step_per_unit",
-    "UserEncoderSource",
-]
 
 
 def get_motor_attributes(name):
@@ -289,7 +297,7 @@ def channel_data(name, _type):
     channel_alias = aliases[name]
     channel_name = name
     channel_axis = get_property(name, "Axis")
-    try: 
+    try:
         channel_instr = get_property(name, "instrument_id")
         channel_instrument = instrument_ids[channel_instr]
     except:
@@ -423,16 +431,22 @@ def proceed_instruments(instr_list, sheet):
         line_data = (instr_type, instr_pool, instr_name, instr_class)
         write_line(sheet, line + 1, line_data)
 
-proceed_motors(motors, motor_sheet)
-proceed_pseudos(pseudos, pseudo_sheet)
-proceed_controllers(controllers, controller_sheet)
-proceed_pool(pool_name, servers_sheet)
-proceed_macroserver(ms_name, servers_sheet)
-proceed_global(pool, global_sheet)
-proceed_iors(iors, ior_sheet)
-proceed_channel(channels, channel_sheet)
-proceed_measgrps(measgrps, acq_sheet)
-proceed_instruments(instrument_list, instr_sheet)
-proceed_doors(doors,door_sheet)
 
-w_workbook.save("{}.xls".format(pool))
+def main():
+
+    proceed_motors(motors, motor_sheet)
+    proceed_pseudos(pseudos, pseudo_sheet)
+    proceed_controllers(controllers, controller_sheet)
+    proceed_pool(pool_name, servers_sheet)
+    proceed_macroserver(ms_name, servers_sheet)
+    proceed_global(pool, global_sheet)
+    proceed_iors(iors, ior_sheet)
+    proceed_channel(channels, channel_sheet)
+    proceed_measgrps(measgrps, acq_sheet)
+    proceed_instruments(instrument_list, instr_sheet)
+    proceed_doors(doors,door_sheet)
+
+    w_workbook.save("{}/{}.xls".format(os.getcwd(), pool))
+
+if __name__ == '__main__':
+    main()
