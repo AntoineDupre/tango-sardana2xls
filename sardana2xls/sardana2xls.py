@@ -16,6 +16,7 @@ import logging
 
 
 class SardanaMap:
+    """ Manage sardana elements """
     def __init__(self, pool):
         # Connect to the tangodb
         self.db = tango.Database()
@@ -37,6 +38,7 @@ class SardanaMap:
         self._setup_class_mapping()
 
     def _setup_mapping(self):
+        """ Generate internal sardana id mapping """
         db = self.db
         # Prepare environment
         elements = get_elements(self.pool, self.db)
@@ -55,6 +57,7 @@ class SardanaMap:
         self.instrument_ids = generate_instrument_mapping(self.instrument_list)
 
     def _setup_class_mapping(self):
+        """ Sort sardana elements  """
         elements = self.elements
         ms_elements = self.ms_elements
         db = self.db
@@ -83,6 +86,7 @@ class SardanaMap:
         ]
 
     def ior_data(self, name):
+        """ Format one IORegister """
         ior_ctrl = self.aliases[self.ids[self.ctrl_ids[name][0]]]
         ior_type = "IORegister"
         ior_pool = self.pool_name
@@ -110,6 +114,7 @@ class SardanaMap:
         )
 
     def channel_data(self, name, _type):
+        """ Format one Acquisition channel """
         channel_ctrl = self.aliases[self.ids[self.ctrl_ids[name][0]]]
         channel_type = _type
         channel_pool = self.pool_name
@@ -137,6 +142,7 @@ class SardanaMap:
         )
 
     def motor_data(self, name, mot_type):
+        """ Format one motor """
         mot_type = mot_type
         mot_pool = self.pool_name
 
@@ -419,7 +425,7 @@ def write_line(sheet, line, data):
 
 def get_motor_attributes(name):
     tango_db = tango.DeviceProxy("sys/database/2")
-    query = "Select attribute, value from property_attribute_device "
+    quer = "Select attribute, value from property_attribute_device "
     query += "where device='{}' and name='__value'"
     query = query.format(name)
     reply = tango_db.DbMySqlSelect(query)
