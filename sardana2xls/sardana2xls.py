@@ -352,6 +352,51 @@ class SardanaMap:
         for line, data in enumerate(_channels):
             write_line(sheet, line + 1, data)
 
+    def motor_parameters_data(self, name):
+        par_pool = self.pool_name
+        par_alias = self.aliases[name]
+        par_desc = ""
+        par_parameter = "position"
+        par_config = get_attribute_config(name, par_parameter)
+
+        return (
+            par_pool,
+            par_alias,
+            par_parameter,
+            par_config["label"],
+            par_config["format"],
+            par_config["min_value"],
+            par_config["min_alarm"],
+            par_config["min_warning"],
+            par_config["max_warning"],
+            par_config["max_alarm"],
+            par_config["max_value"],
+            par_config["unit"],
+            par_config["poll_period"],
+            par_config["change_event"],
+            par_desc,
+        )
+
+    def proceed_parameters(self, sheet):
+        logging.info("Create parameters")
+        icepaps = [
+            k
+            for k in self.elements
+            if get_property(k, "klass") == "IcepapController"
+        ]
+        icepapmotors = []
+        for icepap in icepaps:
+            motctrl_id = get_property(icepap, "id")
+            icepapmotors = icepapmotors + [
+                k
+                for k in self.elements
+                if get_property(k, "ctrl_id") == motctrl_id
+            ]
+        for line, mot in enumerate(icepapmotors):
+            logging.info(str(mot))
+            data = self.motor_parameters_data(mot)
+            write_line(sheet, line + 1, data)
+
 
 class XlsWriter:
     def __init__(self, template):
@@ -442,6 +487,45 @@ def get_motor_attributes(name):
         for att, value in zip(reply[::2], reply[1::2])
     ]
     return answer
+
+
+################
+
+
+def get_attribute_config(name, attr):
+    db = tango.Database()
+    attrconf = db.get_device_attribute_property(name, attr)[attr]
+    required = [
+        "label",
+        "format",
+        "min_value",
+        "min_alarm",
+        "min_warning",
+        "max_warning",
+        "max_alarm",
+        "max_value",
+        "unit",
+    ]
+    for par in required:
+        if par in attrconf:
+            attrconf[par] = str(attrconf[par][0])
+        else:
+            attrconf[par] = ""
+    polled_attrs = list(
+        db.get_device_property(name, "polled_attr")["polled_attr"]
+    )
+    if attr.lower() in polled_attrs:
+        attrconf["poll_period"] = str(
+            polled_attrs[polled_attrs.index(attr.lower()) + 1]
+        )
+    else:
+        attrconf["poll_period"] = ""
+    attrconf["change_event"] = ""
+    # at = tango.AttributeProxy(name+'/'+attr)
+    return attrconf  # at.get_config()
+
+
+###############
 
 
 def proceed(pool_name):
