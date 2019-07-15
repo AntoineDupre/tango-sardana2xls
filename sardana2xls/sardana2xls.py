@@ -416,6 +416,7 @@ class XlsWriter:
         self.channel_sheet = w_workbook.get_sheet(7)
         self.measurment_sheet = w_workbook.get_sheet(8)
         self.acq_sheet = w_workbook.get_sheet(9)
+        self.params_sheet = w_workbook.get_sheet(10)
         self.instr_sheet = w_workbook.get_sheet(11)
 
 
@@ -542,6 +543,7 @@ def proceed(pool_name):
     smap.proceed_measgrps(smap.measgrps, writer.acq_sheet)
     smap.proceed_instruments(smap.instrument_list, writer.instr_sheet)
     smap.proceed_doors(smap.doors, writer.door_sheet)
+    smap.proceed_parameters(writer.params_sheet)
 
     writer.w_workbook.save("{}/{}.xls".format(os.getcwd(), pool_name))
 
